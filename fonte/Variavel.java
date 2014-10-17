@@ -1,24 +1,22 @@
 class Variavel {
 	private double var_num;
 	private String var_str;
-	private int type;
+	private char type;
 	private String name;
 	
-	//Para fazer a declaração de uma variável usa-se os construtores;
-	public Variavel(String n, int t, double d) {
-		this.var_num = d;
-		this.type = t;
+	//Para fazer a declaração de uma variável usa-se o construtor;
+	public Variavel(String n, char t) {
+		this.var_num = 0;
+		this.var_str = ("");
 		this.name = n;
+		this.type = t;
 	}
-	public Variavel(String n, int t, String s) {
-		this(n, t, 0);
-		this.var_num = s;
-	}
+	
 	//Como não se pode alterar o tipo ou o nome de uma variável após declarada, não são necessários setter's para esses atributos;
 	public String getName() {
 		return this.name;
 	}
-	public int getType() {
+	public char getType() {
 		return this.type;
 	}
 	public void setVarNum(double d) {
@@ -32,5 +30,5 @@ class Variavel {
 	}
 	public String getVarStr() {
 		return this.var_str;
-	}	
+	}
 }

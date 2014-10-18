@@ -28,7 +28,7 @@ class Interpretador {
 		//Retorna verdadeiro se a string s possui apenas números e falso em outros casos;
 		int i;
 		for(i=0;i<s.length();i++) {
-			if (!(Character.isDigit(s.charAt(i))))
+			if ((!(Character.isDigit(s.charAt(i)))) && (s.charAt(i)!='.'))
 				return false;
 		}
 		return true;
@@ -44,11 +44,93 @@ class Interpretador {
 		return true;
 	}
 	
+	private boolean haveQuotes(String s) {
+		if (s.charAt(0)==34 && s.charAt(s.length()-1)==34)
+			return true;
+		return false;
+	}
+	
+	private Variavel validVar(String s) {
+		//Retorna o objeto com o nome igual a string s, se a string s é o nome de uma váriavel válida e null em outros casos;
+		int i;
+		for (i=0;i<this.fpov;i++) {
+			if (s.equals(this.vars[i].getName()))
+				return this.vars[i];
+		}
+		return null;
+	}
+	
+	private boolean verify(String a, String b) {
+		if ((validNumber(a) || validVar(a)!=null) && (validNumber(b) || validVar(b)!=null))
+			return true;
+		return false;
+	}
+	
+	private String isValidOperation(String s) {
+		String aux[];
+		aux = s.split("\\*");
+		if (aux.length==2) {
+			if (verify(aux[0].trim(), aux[1].trim())) {
+				return "*";
+			} else return "$";
+		}
+		aux = s.split("/");
+		if (aux.length==2) {
+			if (verify(aux[0].trim(), aux[1].trim())) {
+				return "/";
+			} else return "$";
+		}
+		aux = s.split("\\+");
+		if (aux.length==2) {
+			if (verify(aux[0].trim(), aux[1].trim())) {
+				return "+";
+			} else return "$";
+		}
+		aux = s.split("-");
+		if (aux.length==2) {
+			if (verify(aux[0].trim(), aux[1].trim())) {
+				return "-";
+			} else return "$";
+		}
+		return "$";
+	}
+	
+	private double resolvesOperation(String s, String spl) {
+		double a, b, r;
+		if (spl.equals("+") || spl.equals("*"))
+			spl = "\\" + spl;
+		String aux[] = s.split(spl);
+		if (validNumber(aux[0].trim())) {
+			a = Double.parseDouble(aux[0].trim());
+		} else {
+			Variavel v;
+			v = validVar(aux[0].trim());
+			a = v.getVarNum();
+		}
+		if (validNumber(aux[1].trim())) {
+			b = Double.parseDouble(aux[1].trim());
+		} else {
+			Variavel v;
+			v = validVar(aux[1].trim());
+			b = v.getVarNum();
+		}
+		if (spl.equals("\\+")) {
+			r = a + b;
+		} else if (spl.equals("\\*")) {
+			r = a * b;
+		} else if (spl.equals("/")) {
+			r = a / b;
+		} else {
+			r = a - b;
+		}
+		return r;
+	}
+	
 	public void interpret(String l[]) {
 		int i, j;
 		this.lines = l;
 		
-		//Primeiramente, veririca se todas as linhas têm o caracter terminador '$' ou abertura/fechamento de escopo '{' ou '}';
+		//Primeiramente, verifica se todas as linhas têm o caracter terminador '$' ou abertura/fechamento de escopo '{' ou '}';
 		for(i=0;i<this.lines.length;i++) {
 			if (this.lines[i]!=null) {
 				j=this.lines[i].length()-1;
@@ -106,17 +188,63 @@ class Interpretador {
 							if (aux.length==2) {
 								//Se há uma atribuição;
 								aux[1] = aux[1].trim();
-								if (aux[1].equals("") || ((this.vars[this.fpov].getType()=='i' || this.vars[this.fpov].getType()=='f') && (!(validNumber(aux[1]))))
-									|| (this.vars[this.fpov].getType()=='s' && (aux[1].charAt(0)!='"' || aux[1].charAt(aux[1].length()-1)!='"'))) {
+								if (aux[1].equals("") || ((this.vars[this.fpov].getType()!='s') && (!(validNumber(aux[1]))))
+									|| (this.vars[this.fpov].getType()=='s' && (!(haveQuotes(aux[1]))))) {
 									//Caso não haja valores após o igual, ou eles estejam incorretos;
 									reportError(i);
 									return;
 								}
 								//Fazem a atribuição do valor a variável:
-								if (this.vars[this.fpov].getType()=='f' || this.vars[this.fpov].getType()=='i')
+								if (this.vars[this.fpov].getType()=='f' || this.vars[this.fpov].getType()=='i') {
 									this.vars[this.fpov].setVarNum(Double.parseDouble(aux[1]));
-								else
+								} else {
 									this.vars[this.fpov].setVarStr(aux[1].substring(1, aux[1].length()-1));
+								}
+							}
+							this.fpov++;
+						}
+					}
+					continue;
+				}
+				String aux[] = this.lines[i].substring(0, this.lines[i].length() - 1).split("=");
+				if (aux.length==2) {
+					//Caso não seja uma declaração, verifica se é uma atribuição de valor à variável;
+					aux[0] = aux[0].trim();
+					Variavel v = validVar(aux[0]);
+					if (v==null) {
+						reportError(i);
+						return;
+					}
+					aux[1] = aux[1].trim();
+					if (v.getType()=='s') {
+						//Verifica se a variável cujo valor será atribuido é do tipo string e nesta situação, caso o valor seja válido, faz a atribuição;
+						if (haveQuotes(aux[1])) {
+							v.setVarStr(aux[1].substring(1, aux[1].length()-1));
+						} else {
+							Variavel v2 = validVar(aux[1]);
+							if (v2!=null) {
+								v.setVarStr(v2.getVarStr());
+							} else {
+								reportError(i);
+								return;
+							}
+						}
+					} else {
+						//Verifica se o lado direito da atribuição é uma operação;
+						String op = isValidOperation(aux[1]);
+						if (!(op.equals("$"))) {
+							//Realiza a operação e atribui o resultado à variável;
+							v.setVarNum(resolvesOperation(aux[1], op));
+						} else {
+							//Caso não seja uma operação, pode ser outra variável, um número ou  uma atribuição inválida;
+							Variavel v2 = validVar(aux[1]);
+							if (v2!=null) {
+								v.setVarNum(v2.getVarNum());
+							} else if (validNumber(aux[1])) {
+								v.setVarNum(Double.parseDouble(aux[1]));
+							} else {
+								reportError(i);
+								return;
 							}
 						}
 					}

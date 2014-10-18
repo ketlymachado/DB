@@ -97,20 +97,19 @@ class Interpretador {
 	
 	private double resolvesOperation(String s, String spl) {
 		double a, b, r;
+		Variavel v;
 		if (spl.equals("+") || spl.equals("*"))
 			spl = "\\" + spl;
 		String aux[] = s.split(spl);
 		if (validNumber(aux[0].trim())) {
 			a = Double.parseDouble(aux[0].trim());
 		} else {
-			Variavel v;
 			v = validVar(aux[0].trim());
 			a = v.getVarNum();
 		}
 		if (validNumber(aux[1].trim())) {
 			b = Double.parseDouble(aux[1].trim());
 		} else {
-			Variavel v;
 			v = validVar(aux[1].trim());
 			b = v.getVarNum();
 		}
@@ -129,6 +128,7 @@ class Interpretador {
 	public void interpret(String l[]) {
 		int i, j;
 		this.lines = l;
+		Variavel v, v2;
 		
 		//Primeiramente, verifica se todas as linhas têm o caracter terminador '$' ou abertura/fechamento de escopo '{' ou '}';
 		for(i=0;i<this.lines.length;i++) {
@@ -205,12 +205,103 @@ class Interpretador {
 						}
 					}
 					continue;
+				} else if (lines[i].charAt(0)=='!') {
+					//Verifica se é um comando de impressão na tela;
+					for (j=1;lines[i].charAt(j)==32;j++);
+					if (lines[i].charAt(j)=='v') {
+						//Impressão de uma variável;
+						String auxlines = lines[i];
+						String aux2[] = auxlines.split("\\(");
+						//Separa a string para obter o nome da variável;
+						if (j+1<=aux2[0].length()-1) {
+							aux2[0] = aux2[0].substring(j+1, aux2[0].length()-1);
+							if (!(onlySpaces(aux2[0]))) {
+								reportError(i);
+								return;
+							}
+						}
+						if (aux2.length==2) {
+							aux2 = aux2[1].split("\\)");
+							if (0<=aux2[1].length()-2) {
+								aux2[1] = aux2[1].substring(0, aux2[1].length()-2);
+								if (!(onlySpaces(aux2[1]))) {
+									reportError(i);
+									return;
+								}
+							}
+							if (aux2.length==2) {
+								aux2[0] = aux2[0].trim();
+								v = validVar(aux2[0]);
+								//Verifica se a variável é válida;
+								if (v!=null) {
+									//Se for, verifica o seu tipo para fazer a impressão adequada;
+									if (v.getType()=='s') {
+										System.out.print(v.getVarStr());
+									} else {
+										double x = v.getVarNum();
+										if (v.getType()=='i') {
+											System.out.printf("%.0f", x);
+										} else System.out.print(x);
+									}
+								} else {
+									reportError(i);
+									return;
+								}
+							} else {
+								reportError(i);
+								return;
+							}
+						} else {
+							reportError(i);
+							return;
+						}
+					} else if (lines[i].charAt(j)=='l') {
+						//Impressão de uma quebra de linha;
+						if (lines[i].charAt(j+1)=='$' || onlySpaces(lines[i].substring(j+1, lines[i].length()-2))) {
+							System.out.println();
+						} else {
+							reportError(i);
+							return;
+						}
+					} else if (lines[i].charAt(j)=='t') {
+						//Impressão de um texto;
+						String auxlines = lines[i];
+						String aux2[] = auxlines.split("\\(");
+						//Separa a String para obter o texto;
+						if (j+1<=aux2[0].length()-1) {
+							aux2[0] = aux2[0].substring(j+1, aux2[0].length()-1);
+							if (!(onlySpaces(aux2[0]))) {
+								reportError(i);
+								return;
+							}
+						}
+						if (aux2.length==2) {
+							aux2 = aux2[1].split("\\)");
+							if (0<=aux2[1].length()-2) {
+								aux2[1] = aux2[1].substring(0, aux2[1].length()-2);
+								if (!(onlySpaces(aux2[1]))) {
+									reportError(i);
+									return;
+								}
+							}
+							if (aux2.length==2) {
+								System.out.print(aux2[0]);
+							} else {
+								reportError(i);
+								return;
+							}
+						} else {
+							reportError(i);
+							return;
+						}
+					}
+					continue;
 				}
 				String aux[] = this.lines[i].substring(0, this.lines[i].length() - 1).split("=");
 				if (aux.length==2) {
 					//Caso não seja uma declaração, verifica se é uma atribuição de valor à variável;
 					aux[0] = aux[0].trim();
-					Variavel v = validVar(aux[0]);
+					v = validVar(aux[0]);
 					if (v==null) {
 						reportError(i);
 						return;
@@ -221,7 +312,7 @@ class Interpretador {
 						if (haveQuotes(aux[1])) {
 							v.setVarStr(aux[1].substring(1, aux[1].length()-1));
 						} else {
-							Variavel v2 = validVar(aux[1]);
+							v2 = validVar(aux[1]);
 							if (v2!=null) {
 								v.setVarStr(v2.getVarStr());
 							} else {
@@ -237,7 +328,7 @@ class Interpretador {
 							v.setVarNum(resolvesOperation(aux[1], op));
 						} else {
 							//Caso não seja uma operação, pode ser outra variável, um número ou  uma atribuição inválida;
-							Variavel v2 = validVar(aux[1]);
+							v2 = validVar(aux[1]);
 							if (v2!=null) {
 								v.setVarNum(v2.getVarNum());
 							} else if (validNumber(aux[1])) {

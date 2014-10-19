@@ -1,3 +1,16 @@
+/*
+ * Classe Principal
+ *
+ * Esse código foi desenvolvido para a disciplina de Programação I da Universidade Federal da Fronteira Sul.
+ * Seu objetivo é instanciar o interpretador da linguagem DB, lendo o código fonte a partir do arquivo, para
+ * então repassá-lo para ser interpretado.
+ * 
+ * Para informações sobre o uso da linguagem DB, consulte o manual.
+ * Para informações sobre o interpretador, veja o arquivo 'Interpretador.java'.
+ * 
+ * Por Kétly Gonçalves Machado <ketly.machado@gmail.com>
+ */
+
 import java.util.Scanner;
 import java.io.*;
 

@@ -1,3 +1,17 @@
+/*
+ * Classe Principal
+ *
+ * Esse código foi desenvolvido para a disciplina de Programação I da Universidade Federal da Fronteira Sul.
+ * Representa a classe Variavel, que por sua vez, representa uma váriavel na linguagem DB. Esta classe é
+ * utilizada no Interpretador, para fazer o armazenamento das variáveis declaradas.
+ * 
+ * Para informações sobre o uso da linguagem DB, consulte o manual.
+ * Para informações sobre o interpretador, veja o arquivo 'Interpretador.java'.
+ * 
+ * Por Kétly Gonçalves Machado <ketly.machado@gmail.com>
+ */
+
+
 class Variavel {
 	private double var_num;
 	private String var_str;

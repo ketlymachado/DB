@@ -1,17 +1,33 @@
+/*
+ * Interpretador
+ *
+ * Esse código foi desenvolvido para a disciplina de Programação I da Universidade Federal da Fronteira Sul.
+ * Por meio da linguagem Java, ele trabalha como um interpretador para a linguagem DB. Seu objetivo é, 
+ * dado um código escrito na linguagem DB, interpretar todos os comandos presentes no mesmo, executando-os
+ * ou relatando erros de sintaxe.
+ * 
+ * Para informações sobre o uso da linguagem DB, consulte o manual.
+ * 
+ * Por Kétly Gonçalves Machado <ketly.machado@gmail.com>
+ */
+
 import java.util.Scanner;
+
 class Interpretador {
-	private String lines[];
 	private Variavel vars[];
 	private int fpov; //Guarda a primeira posição vazia do vetor vars (first position of vars - fpov);
+	private int flagloop;
 	
 	public Interpretador() {
 		//Construtor da classe Interpretador;
 		this.vars = new Variavel[1000]; //Permite até 1000 variáveis;
 		this.fpov = 0;
+		this.flagloop = 0;
 	}
 	
 	private void reportError(int i) {
 		i++;
+		this.flagloop = 1;
 		System.out.println("Sintax error at line " + i + ".");
 	}
 	
@@ -19,6 +35,7 @@ class Interpretador {
 		//Retorna verdadeiro se a string s possui apenas letras ou números e falso em outros casos;
 		int i;
 		for(i=0;i<s.length();i++) {
+			if (i==0 && Character.isDigit(s.charAt(i))) return false;
 			if (!(Character.isDigit(s.charAt(i)) || Character.isLetter(s.charAt(i))))
 				return false;
 		}
@@ -62,12 +79,14 @@ class Interpretador {
 	}
 	
 	private boolean verify(String a, String b) {
+		//Verifica se as duas strings recebidas são números ou variáveis válidas;
 		if ((validNumber(a) || validVar(a)!=null) && (validNumber(b) || validVar(b)!=null))
 			return true;
 		return false;
 	}
 	
 	private String isValidOperation(String s) {
+		//Verifica se a string s representa uma operação válida, conforme seus operandos e operadores;
 		String aux[];
 		aux = s.split("\\*");
 		if (aux.length==2) {
@@ -93,35 +112,68 @@ class Interpretador {
 				return "-";
 			} else return "$";
 		}
+		aux = s.split("%");
+		if (aux.length==2) {
+			if (verify(aux[0].trim(), aux[1].trim())) {
+				Variavel v1 = validVar(aux[0].trim());
+				Variavel v2 = validVar(aux[1].trim());
+				if ((v1!=null && v1.getType()=='i') || aux[0].indexOf(".")<0) {
+					if ((v2!=null && v2.getType()=='i') || aux[1].indexOf(".")<0) {
+						return "%";
+					}
+				}
+			} else return "$";
+		}
 		return "$";
 	}
 	
 	private double resolvesOperation(String s, String spl) {
-		double a, b, r;
+		//Verifica se os operandos são variáveis ou números, obtém seus valores, realiza a opeção conforme o operador e retorna o valor obtido;
+		double a, b, r=0;
+		int c, d;
 		Variavel v;
-		if (spl.equals("+") || spl.equals("*"))
-			spl = "\\" + spl;
-		String aux[] = s.split(spl);
-		if (validNumber(aux[0].trim())) {
-			a = Double.parseDouble(aux[0].trim());
+		String aux[];
+	
+		if (spl.equals("%")) {
+			aux = s.split(spl);
+			if (validNumber(aux[0].trim())) {
+				c = Integer.parseInt(aux[0].trim());
+			} else {
+				v = validVar(aux[0].trim());
+				c = (int)v.getVarNum();
+			}
+			if (validNumber(aux[1].trim())) {
+				d = Integer.parseInt(aux[1].trim());
+			} else {
+				v = validVar(aux[1].trim());
+				d = (int)v.getVarNum();
+			}
+			r = c%d;
 		} else {
-			v = validVar(aux[0].trim());
-			a = v.getVarNum();
-		}
-		if (validNumber(aux[1].trim())) {
-			b = Double.parseDouble(aux[1].trim());
-		} else {
-			v = validVar(aux[1].trim());
-			b = v.getVarNum();
-		}
-		if (spl.equals("\\+")) {
-			r = a + b;
-		} else if (spl.equals("\\*")) {
-			r = a * b;
-		} else if (spl.equals("/")) {
-			r = a / b;
-		} else {
-			r = a - b;
+			if (spl.equals("+") || spl.equals("*"))
+				spl = "\\" + spl;
+			aux = s.split(spl);
+			if (validNumber(aux[0].trim())) {
+				a = Double.parseDouble(aux[0].trim());
+			} else {
+				v = validVar(aux[0].trim());
+				a = v.getVarNum();
+			}
+			if (validNumber(aux[1].trim())) {
+				b = Double.parseDouble(aux[1].trim());
+			} else {
+				v = validVar(aux[1].trim());
+				b = v.getVarNum();
+			}
+			if (spl.equals("\\+")) {
+				r = a + b;
+			} else if (spl.equals("\\*")) {
+				r = a * b;
+			} else if (spl.equals("/")) {
+				r = a / b;
+			} else if (spl.equals("-")){
+				r = a - b;
+			} 
 		}
 		return r;
 	}
@@ -382,16 +434,15 @@ class Interpretador {
 		return 2;
 	}
 	
-	public void interpret(String l[]) {
+	public void interpret(String lines[]) {
 		int i, j;
-		this.lines = l;
 		Variavel v, v2;
 		
 		//Primeiramente, verifica se todas as linhas têm o caracter terminador '$' ou abertura/fechamento de escopo '{' ou '}';
-		for(i=0;i<this.lines.length;i++) {
-			if (this.lines[i]!=null) {
-				j=this.lines[i].length()-1;
-				if (!(this.lines[i].charAt(j)=='$' || this.lines[i].charAt(j)=='{' || this.lines[i].charAt(j)=='}')) {
+		for(i=0;i<lines.length;i++) {
+			if (lines[i]!=null && (!lines[i].isEmpty()) && (!onlySpaces(lines[i]))) {
+				j=lines[i].length()-1;
+				if (!(lines[i].charAt(j)=='$' || lines[i].charAt(j)=='{' || lines[i].charAt(j)=='}' || lines[i].charAt(j)=='[' || lines[i].charAt(j)==']')) {
 					//Caso uma linha não esteja adequada, retorna erro para o usuário da linguagem e finaliza o interpretador;
 					reportError(i);
 					return;
@@ -399,22 +450,22 @@ class Interpretador {
 			}
 		}
 		//Após essa verificação, começa a interpretar o código, linha por linha;
-		for(i=0;i<this.lines.length;i++) {
-			if (this.lines[i]!=null) {
-				if (this.lines[i].charAt(0) == '@') {
+		for(i=0;i<lines.length;i++) {
+			if (lines[i]!=null && (!lines[i].isEmpty()) && (!onlySpaces(lines[i]))) {
+				if (lines[i].charAt(0) == '@') {
 					//Verifica se é uma declaração de variável(is);
 					
-					if (this.lines[i].charAt(lines[i].length()-1)!='$') {
+					if (lines[i].charAt(lines[i].length()-1)!='$') {
 						//Analisa se o terminador está correto;
 						reportError(i);
 						return;
 					}
 					
-					for(j=1;j<this.lines[i].length() && (this.lines[i].charAt(j)==32 || this.lines[i].charAt(j)==9);j++);
+					for(j=1;j<lines[i].length() && (lines[i].charAt(j)==32 || lines[i].charAt(j)==9);j++);
 					int typeposition = j; //Guarda a posição do tipo da(s) variável(is) declarada(s);
 					
 					//Verifica se o tipo é válido ou se está declarado;
-					switch (this.lines[i].charAt(typeposition)) {
+					switch (lines[i].charAt(typeposition)) {
 						case 'i':
 							break;
 						case 'f':
@@ -431,7 +482,7 @@ class Interpretador {
 					}
 					///////////////////////////////////////////////////////////
 										
-					String varsdeclaration = this.lines[i].substring(typeposition+1, this.lines[i].length()-1); //Obtém da linha todas as variáveis declaradas;
+					String varsdeclaration = lines[i].substring(typeposition+1, lines[i].length()-1); //Obtém da linha todas as variáveis declaradas;
 					String auxvars[] = varsdeclaration.split(","); //Faz a separação das variáveis;
 					String aux[];
 					
@@ -447,7 +498,7 @@ class Interpretador {
 								reportError(i);
 								return;
 							}
-							this.vars[this.fpov] = new Variavel(aux[0], this.lines[i].charAt(typeposition)); //Instancia uma nova variável, com seu nome e tipo;
+							this.vars[this.fpov] = new Variavel(aux[0], lines[i].charAt(typeposition)); //Instancia uma nova variável, com seu nome e tipo;
 							if (aux.length==2) {
 								//Se há uma atribuição;
 								aux[1] = aux[1].trim();
@@ -471,7 +522,7 @@ class Interpretador {
 				} else if (lines[i].charAt(0)=='!') {
 					//Verifica se é um comando de impressão na tela;
 					
-					if (this.lines[i].charAt(lines[i].length()-1)!='$') {
+					if (lines[i].charAt(lines[i].length()-1)!='$') {
 						//Analisa se o terminador está correto;
 						reportError(i);
 						return;
@@ -568,11 +619,11 @@ class Interpretador {
 					}
 					continue;
 				}
-				String aux[] = this.lines[i].substring(0, this.lines[i].length() - 1).split("=");
+				String aux[] = lines[i].substring(0, lines[i].length() - 1).split("=");
 				if (aux.length==2) {
 					//Caso não seja uma declaração, verifica se é uma atribuição de valor à variável;
 					
-					if (this.lines[i].charAt(lines[i].length()-1)!='$') {
+					if (lines[i].charAt(lines[i].length()-1)!='$') {
 						//Analisa se o terminador está correto;
 						reportError(i);
 						return;
@@ -622,8 +673,14 @@ class Interpretador {
 				if (lines[i].charAt(0)=='i') {
 					//Verifica se é um controlador de fluxo (if);
 					
-					if (this.lines[i].charAt(lines[i].length()-1)!='{') {
+					if (lines[i].charAt(lines[i].length()-1)!='{') {
 						//Analisa se o terminador está correto;
+						reportError(i);
+						return;
+					}
+					
+					if (lines[i].charAt(1)!='f') {
+						//Verifica se a sintaxe do if está correta;
 						reportError(i);
 						return;
 					}
@@ -638,7 +695,7 @@ class Interpretador {
 					String c[] = condition.split("\\(");
 					c[1] = c[1].trim();
 					
-					if (!(onlySpaces(c[0]))) {
+					if ((!(c[0].isEmpty())) && (!(onlySpaces(c[0])))) {
 						reportError(i);
 						return;
 					}
@@ -659,7 +716,7 @@ class Interpretador {
 					}
 					if (x==0) {
 						//Caso seja falsa, ignora o código dentro do controlador de fluxo;
-						for (j=i+1;j<lines.length && (lines[j].charAt(0) != '}' || lines[j].charAt(lines[j].length()-1) != '}');j++);
+						for (j=i+1;j<lines.length && lines[j].charAt(0) != '}';j++);
 						i = j;
 						if (j==lines.length) {
 							reportError(i);
@@ -670,8 +727,14 @@ class Interpretador {
 				} else if (lines[i].charAt(0)=='g') {
 					//Verifica se é um comando de leitura;
 					
-					if (this.lines[i].charAt(lines[i].length()-1)!='$') {
+					if (lines[i].charAt(lines[i].length()-1)!='$') {
 						//Analisa se o terminador está correto;
+						reportError(i);
+						return;
+					}
+					
+					if (lines[i].charAt(1)!='e' || lines[i].charAt(2)!='t') {
+						//Verifica se a sintaxe do get está correta;
 						reportError(i);
 						return;
 					}
@@ -712,8 +775,82 @@ class Interpretador {
 						double x = sc.nextDouble();
 						v.setVarNum(x);
 					}
+				} else if (lines[i].charAt(0)=='r') {
+					//Verifica se é um laço;
+					
+					if (lines[i].charAt(lines[i].length()-1)!='[') {
+						//Analisa se o terminador está correto;
+						reportError(i);
+						return;
+					}
+					
+					if (!(lines[i].substring(0, 8).equals("repeatif"))) {
+						//Verifica se a sintaxe do comando está correta;
+						reportError(i);
+						return;
+					}
+					
+					if (!(lines[i].indexOf("(")>=0 && lines[i].indexOf(")")>=0)) {
+						reportError(i);
+						return;
+					}
+					
+					//Separa a String para obter a expressão entre parenteses;
+					String loop = lines[i].substring(8, lines[i].length()-1);
+					String lo[] = loop.split("\\(");
+					
+					lo[1] = lo[1].trim();
+					
+					if ((!lo[0].isEmpty()) || (!(onlySpaces(lo[0])))) {
+						reportError(i);
+						return;
+					}
+					
+					lo = lo[1].split("\\)");
+					lo[0] = lo[0].trim();
+					
+					if (lo.length!=1) {
+						reportError(i);
+						return;
+					}
+					
+					//Encontra a linha do fechamento do laço;
+					for (j=i+1;j<lines.length && lines[j].charAt(0) != ']';j++);
+					
+					String lines2[] = new String[j - i+1];
+					int ii = 0, i2 = i+1;
+					
+					//Copia o código que será repetido para uma variável auxiliar;
+					while (i2<j) {
+						lines2[ii] = lines[i2];
+						ii++;
+						i2++;
+					}
+					
+					if (validCondition(lo[0])==2) {
+						//Se a condição é inválida;
+						reportError(i);
+						return;
+					}
+					
+					//Executa o laço;
+					while (validCondition(lo[0])==1) {
+						interpret(lines2);
+						if (this.flagloop==1) {
+							System.out.println("--- Of the loop at line " + i + ".");
+							return;
+						}
+					}
+					i = j;
+					continue;
+				} else {
+					//Se uma linha possui apenas um caracter de fechamento de controlador de fluxo ou de laço;
+					if (lines[i].charAt(0)!='}' && lines[i].charAt(0)!=']') {
+						reportError(i);
+						return;
+					}
 				}
 			}
 		}
 	}
-}
+}	

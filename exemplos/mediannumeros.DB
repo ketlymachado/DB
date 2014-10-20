@@ -1,0 +1,23 @@
+@ f media, le, somamedia$
+@ i n, i$
+
+! t(Digite a quantidade de números:)$
+! l$
+
+get(n)$
+i=0$
+somamedia=0$
+
+! t(Digite os números:)$
+! l$
+
+repeatif(i<n) [
+	get(le)$
+	somamedia = somamedia + le$
+	i = i + 1$
+]
+
+media = somamedia / n$
+! t(Media = )$
+! v(media)$
+! l$

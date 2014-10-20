@@ -1,0 +1,23 @@
+@ i n, i, mod, contador, aux$
+i = 2$
+contador = 0$
+
+! t(Digite um número:)$
+! l$
+get(n)$
+repeatif(i<n) [
+	mod = n%i$
+	if (mod#0) {
+		contador = contador + 1$
+	}
+	i = i + 1$
+]
+aux = n - 2$
+if (contador==aux) {
+	! t(É primo!)$
+	! l$
+}
+if (contador#aux) {
+	! t(Não é primo!)$
+	! l$
+}

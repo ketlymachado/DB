@@ -1,0 +1,12 @@
+@ f b, a, area$
+
+! t(Digite a altura:)$
+! l$
+get(a)$
+! t(Digite a base:)$
+! l$
+get(b)$
+area = a * b$
+! t(Area = )$
+! v(area)$
+! l$

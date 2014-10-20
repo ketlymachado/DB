@@ -1,0 +1,12 @@
+@ f a, b, somaMedia, mediaFinal$
+
+! t(Digite dois números [separados por enter]:)$
+! l$
+get(a)$
+get(b)$
+
+somaMedia = a + b$
+mediaFinal = somaMedia / 2$ 
+! t (Media = ) $
+! v (mediaFinal)$
+! l$

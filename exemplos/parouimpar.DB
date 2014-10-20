@@ -1,0 +1,20 @@
+@ i n, mod$
+
+! t(Digite um número:)$
+! l$
+get(n)$
+
+repeatif  (n>0)  [
+	mod = n%2$
+	if (mod==0) {
+		! t(É par!)$
+		! l$
+	}
+	if (mod#0) {
+		! t(É impar!)$
+		! l$
+	}
+	! t(Digite um número:)$
+	! l$
+	get(n)$
+]

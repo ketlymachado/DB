@@ -801,7 +801,7 @@ class Interpretador {
 					
 					lo[1] = lo[1].trim();
 					
-					if ((!lo[0].isEmpty()) || (!(onlySpaces(lo[0])))) {
+					if ((!lo[0].isEmpty()) && (!(onlySpaces(lo[0])))) {
 						reportError(i);
 						return;
 					}

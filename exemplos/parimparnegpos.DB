@@ -1,0 +1,46 @@
+@ i n, num, contapares, contaimpares, contanegativos, contapositivos, i, mod$
+
+! t (Digite a quantidade de números: )$
+! l$
+get(n)$
+! t (Digite os números: )$
+! l$
+i = 0$
+contapares = 0$
+contaimpares = 0$
+contanegativos = 0$
+contapositivos = 0$
+repeatif(i<n) [
+	get(num)$
+	if (num>==0) {
+		contapositivos = contapositivos +1$
+	}
+	if (num<0) {
+		contanegativos = contanegativos +1$
+	}
+	if (num>==0) {
+		mod = num%2$
+	}
+	if (num<0) {
+		mod = -1$
+	}
+	if (mod>0) {
+		contaimpares = contaimpares +1$
+	}
+	if (mod==0) {
+		contapares = contapares +1$
+	}
+	i = i + 1$
+]
+! v(contapares)$
+! t( números pares.)$
+! l$
+! v(contaimpares)$
+! t( números impares.)$
+! l$
+! v(contanegativos)$
+! t( números negativos.)$
+! l$
+! v(contapositivos)$
+! t( números positivos.)$
+! l$

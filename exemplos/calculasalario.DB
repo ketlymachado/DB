@@ -1,0 +1,18 @@
+@ i n, h$
+@ f salarioporhora, stotal$
+! t (Digite o número do funcionário: )$
+! l$
+get(n)$
+! t (Digite o número de horas: )$
+! l$
+get(h)$
+! t (Digite o salário/hora: )$
+! l$
+get(salarioporhora)$
+! t (NUMBER = )$
+! v (n)$
+! l$
+! t (SALARY = )$
+stotal = h * salarioporhora$
+! v (stotal)$
+! l$

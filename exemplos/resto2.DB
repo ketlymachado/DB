@@ -1,0 +1,16 @@
+@ i i, n, mod$
+!t(Digite n:)$
+!l$
+get(n)$
+
+! t(Números de 1 a 10000, tal que divididos por n tem resto 2:)$
+! l$
+i = 1$
+repeatif(i<==10000) [
+	mod = i%n$
+	if (mod==2) {
+		! v(i)$
+		! l$
+	}
+	i = i + 1$
+]

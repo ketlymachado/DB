@@ -1,0 +1,29 @@
+@ i n, i$
+@ f n1, n2, n3, aux1, aux2, aux3, media$
+
+! t (Digite o número de casos de teste: )$
+! l$
+get(n)$
+i = 0$
+repeatif(i<n) [
+	! t (Digite o valor 1:)$
+	! l$
+	get(n1)$
+	! t (Digite o valor 2:)$
+	! l$
+	get(n2)$
+	! t (Digite o valor 3:)$
+	! l$
+	get(n3)$
+	aux1 = n1 * 0.2$
+	aux2 = n2 * 0.3$
+	aux3 = n3 * 0.5$
+	media = aux1 + aux2$
+	media = media + aux3$
+	! l$
+	! t (Media = )$
+	! v (media)$
+	! l$
+	! l$
+	i = i + 1$
+]

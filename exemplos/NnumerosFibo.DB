@@ -1,0 +1,29 @@
+@ i f1, f2, n, aux, i$
+! t(Digite n:)$
+! l$
+get(n)$
+if (n==1) {
+	! t(0)$
+	! l$
+}
+if (n==2) {
+	! t(0 1)$
+	!l$
+}
+if (n>2) {
+	f1 = 0$
+	f2 = 1$
+	! v(f1)$
+	! t( )$
+	! v(f2)$
+	i = 3$
+	repeatif(i<==n) [
+		aux = f2$
+		f2 = f1 + f2$
+		f1 = aux$
+		!t( )$
+		!v(f2)$
+		i = i + 1$
+	]
+	!l$
+}

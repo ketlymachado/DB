@@ -28,7 +28,7 @@ class Interpretador {
 	private void reportError(int i) {
 		i++;
 		this.flagloop = 1;
-		System.out.println("Sintax error at line " + i + ".");
+		System.out.println("Syntax error at line " + i + ".");
 	}
 	
 	private boolean validName(String s) {
@@ -46,7 +46,7 @@ class Interpretador {
 		//Retorna verdadeiro se a string s possui apenas números e falso em outros casos;
 		int i;
 		for(i=0;i<s.length();i++) {
-			if ((!(Character.isDigit(s.charAt(i)))) && (s.charAt(i)!='.'))
+			if ((!(Character.isDigit(s.charAt(i)))) && (s.charAt(i)!='.') && (s.charAt(i)!='-'))
 				return false;
 		}
 		return true;
@@ -80,8 +80,10 @@ class Interpretador {
 	
 	private boolean verify(String a, String b) {
 		//Verifica se as duas strings recebidas são números ou variáveis válidas;
-		if ((validNumber(a) || validVar(a)!=null) && (validNumber(b) || validVar(b)!=null))
-			return true;
+		if ((!a.isEmpty()) && (!b.isEmpty()) && (!onlySpaces(a)) && (!onlySpaces(b))) {
+			if ((validNumber(a) || validVar(a)!=null) && (validNumber(b) || validVar(b)!=null))
+				return true;
+		}
 		return false;
 	}
 	
@@ -494,10 +496,21 @@ class Interpretador {
 						} else {
 							aux = auxvars[j].split("="); //Verifica se há atribuição;
 							aux[0] = aux[0].trim();
+							
 							if (!(validName(aux[0]))) {
+								//Verifica se o nome dado à variável é válido;
 								reportError(i);
 								return;
 							}
+							
+							if (validVar(aux[0])!=null) {
+								//Verifica duplicação de variáveis;
+								i++;
+								this.flagloop = 1;
+								System.out.println("Duplicate variable declaration on line " + i);
+								return;
+							}
+							
 							this.vars[this.fpov] = new Variavel(aux[0], lines[i].charAt(typeposition)); //Instancia uma nova variável, com seu nome e tipo;
 							if (aux.length==2) {
 								//Se há uma atribuição;
@@ -690,6 +703,20 @@ class Interpretador {
 						return;
 					}
 					
+					for (j=i+1;j<lines.length;j++) {
+						//Verifica se existe um fecha escopo de if;
+						if (lines[j]!=null && (!lines[j].isEmpty()) && (!onlySpaces(lines[j]))) {
+							if (lines[j].charAt(0)=='}') {
+								break;
+							}
+						}
+					}
+					
+					if (j==lines.length) {
+						reportError(i);
+						return;
+					}
+					
 					//Separa a String para obter a expressão entre parenteses;
 					String condition = lines[i].substring(2, lines[i].length()-1);
 					String c[] = condition.split("\\(");
@@ -716,12 +743,7 @@ class Interpretador {
 					}
 					if (x==0) {
 						//Caso seja falsa, ignora o código dentro do controlador de fluxo;
-						for (j=i+1;j<lines.length && lines[j].charAt(0) != '}';j++);
 						i = j;
-						if (j==lines.length) {
-							reportError(i);
-							return;
-						}
 					}
 					continue;
 				} else if (lines[i].charAt(0)=='g') {
@@ -815,7 +837,19 @@ class Interpretador {
 					}
 					
 					//Encontra a linha do fechamento do laço;
-					for (j=i+1;j<lines.length && lines[j].charAt(0) != ']';j++);
+					for (j=i+1;j<lines.length;j++) {
+						if (lines[j]!=null && (!lines[j].isEmpty()) && (!onlySpaces(lines[j]))) {
+							if (lines[j].charAt(0)==']') {
+								break;
+							}
+						}
+					}
+					
+					if (j==lines.length) {
+						i++;
+						System.out.println("Missing closes brackets of the loop in the line " + i + ".");
+						return;
+					}
 					
 					String lines2[] = new String[j - i+1];
 					int ii = 0, i2 = i+1;
@@ -837,6 +871,7 @@ class Interpretador {
 					while (validCondition(lo[0])==1) {
 						interpret(lines2);
 						if (this.flagloop==1) {
+							i++;
 							System.out.println("--- Of the loop at line " + i + ".");
 							return;
 						}
